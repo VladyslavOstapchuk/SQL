@@ -1,0 +1,293 @@
+/*Baza danych jest stworzona dla przychowywania informacji o dowodach rejestracyjnych.
+Kazdy samochód ma swój numer rejestracyjny, numer VIN, kolor, typ, wlasciciela,
+datę waznosci ostatniego przegladu, datę waznosci ubezpieczenia*/
+
+--Usuwanie tabeli gdy istnieja
+--Dowody rejestracyjne
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE ' || 'Dowody_rejestracyjne';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+--Samochody
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE ' || 'Samochody';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+--Wlascicieli
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE ' || 'Wlascicieli';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+--Marki
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE ' || 'Marki';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+--Typy
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE ' || 'Typy';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+--Kolory
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE ' || 'Kolory';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+--Historia
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE ' || 'Historia';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+--------------------------------------------------------------------------------
+--Tworzenie tabeli
+--Wlascicieli
+CREATE TABLE Wlascicieli(
+	Pesel INT PRIMARY KEY,
+	Imie VARCHAR(20)NOT NULL,
+	Nazwisko VARCHAR(20) NOT NULL,
+	Data_urodzenia DATE NOT NULL
+);
+/
+--Marki
+CREATE TABLE Marki(
+	id_Marki INT PRIMARY KEY,
+	Nazwa_marki VARCHAR(20) NOT NULL
+);
+/
+--Typy
+CREATE TABLE Typy(
+	id_Typu INT PRIMARY KEY,
+	Typ VARCHAR(20) NOT NULL
+);
+/
+--Kolory
+CREATE TABLE Kolory(
+	id_Koloru INT PRIMARY KEY,
+	Nazwa_koloru VARCHAR(20) NOT NULL
+);
+/
+--Samochody
+CREATE TABLE Samochody(
+    Numer_VIN VARCHAR(17) PRIMARY KEY,
+	id_Marki INT NOT NULL,
+	id_Typu INT NOT NULL,
+	id_Koloru INT NOT NULL,
+	Data_waz_ubezp DATE NOT NULL,
+	Data_waz_przeg DATE NOT NULL
+);
+/
+--Dowody rejestracyjne
+CREATE TABLE Dowody_rejestracyjne(
+	Numer_rej VARCHAR(8) PRIMARY KEY,
+	Numer_VIN VARCHAR(17) NOT NULL,
+	Pesel_wlasc INT NOT NULL,
+CONSTRAINT DRFK FOREIGN KEY(Numer_Vin) REFERENCES  Samochody (Numer_VIN)
+);
+/
+--Tabela dla przychowywania historii zmian
+CREATE OR REPLACE TYPE Record AS OBJECT
+(
+id INT,
+DataZmiany DATE,
+TypZmiany VARCHAR(50),
+WTabeli VARCHAR(20),
+MEMBER PROCEDURE wypisz_rekord
+);
+/
+
+/*
+SET Serveroutput ON;
+CREATE OR REPLACE TYPE BODY Record IS
+MEMBER PROCEDURE wypisz_rekord IS
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(Record.id);
+    DBMS_OUTPUT.PUT_LINE(Record.DataZmiany);
+    DBMS_OUTPUT.PUT_LINE(Record.TypZmiany);
+    DBMS_OUTPUT.PUT_LINE(Record.WTabeli);
+END;
+END;
+/
+*/
+CREATE TABLE Historia OF Record;
+/
+--------------------------------------------------------------------------------
+--Zwiazek miedzy tabelami
+ALTER TABLE Samochody
+ADD(
+CONSTRAINT MFK FOREIGN KEY(id_Marki) REFERENCES  Marki (id_Marki),
+CONSTRAINT TFK FOREIGN KEY(id_Typu) REFERENCES  Typy (id_Typu),
+CONSTRAINT KFK FOREIGN KEY(id_Koloru) REFERENCES  Kolory (id_Koloru));
+--------------------------------------------------------------------------------
+--Wyzwalacz 
+CREATE OR REPLACE TRIGGER Wyzwalacz 
+AFTER INSERT 
+ON Samochody
+DECLARE 
+    newID INT;
+BEGIN
+    SELECT MAX(id) + 1  INTO newID FROM HISTORIA; 
+    
+    INSERT INTO Historia 
+    VALUES(NVL(newID,1),Sysdate,'Dodany record', 'Samochody');
+END;
+/
+--------------------------------------------------------------------------------
+--Wstawienie danych do tabeli 
+--Marki
+INSERT INTO Marki VALUES (1,'Mercedes');
+INSERT INTO Marki VALUES (2,'BMW');
+INSERT INTO Marki VALUES (3,'Volkswagen');
+INSERT INTO Marki VALUES (4,'Chevrolet');
+INSERT INTO Marki VALUES (5,'Lada');
+
+--Typy
+INSERT INTO Typy VALUES (1,'Minivan');
+INSERT INTO Typy VALUES (2,'Kombi');
+INSERT INTO Typy VALUES (3,'VAN');
+INSERT INTO Typy VALUES (4,'Kabriolet');
+INSERT INTO Typy VALUES (5,'Sedan');
+
+--Kolory
+INSERT INTO Kolory VALUES (1,'CZARNY');
+INSERT INTO Kolory VALUES (2,'BIALY');
+INSERT INTO Kolory VALUES (3,'NIEBIESKI');
+INSERT INTO Kolory VALUES (4,'ZIELONY');
+INSERT INTO Kolory VALUES (5,'ZOLTY');
+
+--Samochody 
+INSERT INTO Samochody VALUES ('123123123', 5, 5, 5, TO_DATE('12.12.2020', 'DD.MM.YYYY'), TO_DATE('12.12.2020', 'DD.MM.YYYY'));
+INSERT INTO Samochody VALUES ('321321321', 2, 1, 4, TO_DATE('02.11.2018', 'DD.MM.YYYY'), TO_DATE('13.02.2018', 'DD.MM.YYYY'));
+INSERT INTO Samochody VALUES ('121212121', 1, 1, 1, TO_DATE('11.11.2011', 'DD.MM.YYYY'), TO_DATE('12.12.2011', 'DD.MM.YYYY'));
+INSERT INTO Samochody VALUES ('333333333', 3, 3, 3, TO_DATE('03.03.2003', 'DD.MM.YYYY'), TO_DATE('03.03.2003', 'DD.MM.YYYY'));
+
+--Wlascicieli
+INSERT INTO Wlascicieli VALUES (123123123,'Vladyslav','Ostapchuk',TO_DATE('12.11.1998','DD.MM.YYYY'));
+INSERT INTO Wlascicieli VALUES (123123124,'Powiel','Pasichnik',TO_DATE('17.09.2001','DD.MM.YYYY'));
+INSERT INTO Wlascicieli VALUES (123123125,'Kakoj-to','Tip',TO_DATE('11.11.2011','DD.MM.YYYY'));
+INSERT INTO Wlascicieli VALUES (123123126,'Valerii','Albertovich',TO_DATE('12.12.1974','DD.MM.YYYY'));
+
+--Dowody rejestracyjne
+INSERT INTO Dowody_rejestracyjne 
+VALUES ('FK1211DT','321321321',123123123);
+INSERT INTO Dowody_rejestracyjne 
+VALUES ('FK1211DS','123123123',123123124);
+INSERT INTO Dowody_rejestracyjne 
+VALUES ('FK1211DP','121212121',123123125);
+INSERT INTO Dowody_rejestracyjne 
+VALUES ('FK1211DD','333333333',123123126);
+/
+--------------------------------------------------------------------------------
+SELECT 
+D.Numer_VIN, Numer_rej ,Nazwa_marki ,Typ,Nazwa_koloru,Imie, Nazwisko,Data_waz_ubezp,Data_waz_przeg 
+FROM Dowody_rejestracyjne D
+JOIN Samochody  S ON D.Numer_VIN = S.Numer_VIN
+JOIN Wlascicieli  W ON D.Pesel_wlasc = W.Pesel
+JOIN Kolory  K ON S.id_Koloru = K.id_Koloru
+JOIN Typy  T ON S.id_Typu = T.id_Typu
+JOIN Marki  M ON S.id_Marki = M.id_Marki;
+/
+
+/*SET Serveroutput ON;
+CREATE OR REPLACE PROCEDURE PokazHistorie 
+IS
+rek Rekord;
+CURSOR Cur IS SELECT Dane FROM Historia;
+BEGIN
+    OPEN Cur;
+    LOOP
+        FETCH Cur INTO rek;
+        EXIT WHEN Cur%NOTFOUND;
+        DBMS_OUTPUT.put_line(rek.DataZmiany || ' ' || rek.TypZmiany || ' ' || rek.WTabeli);
+    END LOOP;
+    CLOSE Cur;
+END;
+/*/
+
+SET Serveroutput ON;
+CREATE OR REPLACE PROCEDURE WszystkieDane 
+(VIN Samochody.Numer_VIN%type)
+IS
+
+v_Numer_rej Dowody_rejestracyjne.Numer_rej%type;
+v_Nazwa_marki Marki.Nazwa_marki%type;
+v_Typ Typy.typ%type;
+v_Nazwa_koloru Kolory.Nazwa_koloru%type;
+v_Imie Wlascicieli.Imie%type;
+v_Nazwisko Wlascicieli.Nazwisko%type;
+v_Data_waz_ubezp DATE;
+v_Data_waz_przeg DATE;
+
+BEGIN
+
+SELECT 
+Numer_rej ,Nazwa_marki ,Typ,Nazwa_koloru,Imie, Nazwisko,Data_waz_ubezp,Data_waz_przeg 
+
+INTO
+v_Numer_rej,v_Nazwa_marki,v_Typ,v_Nazwa_koloru,v_Imie,v_Nazwisko,v_Data_waz_ubezp,v_Data_waz_przeg
+
+FROM Dowody_rejestracyjne D
+JOIN Samochody  S ON D.Numer_VIN = S.Numer_VIN
+JOIN Wlascicieli  W ON D.Pesel_wlasc = W.Pesel
+JOIN Kolory  K ON S.id_Koloru = K.id_Koloru
+JOIN Typy  T ON S.id_Typu = T.id_Typu
+JOIN Marki  M ON S.id_Marki = M.id_Marki WHERE D.Numer_VIN=VIN;
+
+DBMS_OUTPUT.put_line('SAMOCHOD                                    ');
+DBMS_OUTPUT.put_line('NUMER VIN                   : ' || VIN);
+DBMS_OUTPUT.put_line('NUMER REJESTRACYJNY         : ' || v_Numer_rej);
+DBMS_OUTPUT.put_line('MARKA                       : ' || v_Nazwa_marki);
+DBMS_OUTPUT.put_line('TYP                         : ' || v_Typ);
+DBMS_OUTPUT.put_line('KOLOR                       : ' || v_Nazwa_koloru);
+DBMS_OUTPUT.put_line('DATA WAZNOSCI UBEZPIECZENIA : ' || v_Data_waz_ubezp);
+DBMS_OUTPUT.put_line('DATA WAZNOSCI PRZEGLADU     : ' || v_Data_waz_przeg);
+DBMS_OUTPUT.put_line('WLASCICEL                   : ' || v_Imie || ' ' || v_Nazwisko);
+
+END;
+/
+
+EXECUTE WszystkieDane('121212121');
+/
+
+SELECT * FROM HISTORIA;
+/

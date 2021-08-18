@@ -1,0 +1,25 @@
+--SELECT COUNT(ename), dname FROM emp, dept WHERE emp.deptno=dept.deptno GROUP BY dname;
+
+--SELECT ename, dname FROM emp, dept WHERE emp.deptno = dept.deptno ORDER BY dname ASC
+
+--SELECT ename,dname FROM emp INNER JOIN dept ON emp.deptno = dept.deptno;
+
+--SELECT ename,dname FROM emp LEFT OUTER JOIN dept ON emp.deptno = dept.deptno;
+
+--SELECT ename,dname FROM emp RIGHT OUTER JOIN dept ON emp.deptno = dept.deptno;
+
+--SELECT ename name,dname dept FROM emp FULL OUTER JOIN dept ON emp.deptno = dept.deptno
+
+--SELECT ename,sal,dname FROM emp INNER JOIN dept ON emp.deptno = dept.deptno WHERE ename = 'SMITH' AND dname = 'RESEARCH' AND sal BETWEEN 700 AND 900;
+
+--SELECT sal, COUNT(empno) as amount FROM emp INNER JOIN dept ON emp.deptno = dept.deptno GROUP BY sal HAVING COUNT(empno) > 1;
+
+--SELECT ename, dname FROM(
+    --SELECT ename, dname FROM emp INNER JOIN dept ON emp.deptno = dept.deptno
+--) WHERE ename = 'ALLEN'
+
+--SELECT ename,dname FROM emp INNER JOIN dept ON emp.deptno = dept.deptno WHERE sal IN (1250,3000);
+
+--SELECT dname FROM dept LEFT OUTER JOIN emp ON dept.deptno = emp.deptno WHERE dept.deptno NOT IN(SELECT deptno FROM emp);
+
+--SELECT dname FROM dept LEFT OUTER JOIN emp ON dept.deptno = emp.deptno WHERE dept.deptno NOT IN(SELECT deptno FROM emp);

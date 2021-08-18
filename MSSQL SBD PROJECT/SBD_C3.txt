@@ -1,0 +1,65 @@
+--1 Declaring of new variable
+DECLARE @var INT = 10;
+SET @var = 20;
+--print in console
+PRINT 'w tabeli jest ' + CAST(@var AS VARCHAR) + ' osób';
+--print as table
+--SELECT @var "Variable";
+
+SELECT @var = Empno FROM EMP;
+
+DECLARE @Name VARCHAR(20) = 'CLARK'
+DECLARE @Number INT = (SELECT Empno FROM EMP WHERE Ename = @Name)
+PRINT @Name + ' ma numer ' + CAST(@Number AS VARCHAR);
+
+
+DECLARE @iloscOsob INTEGER = (SELECT COUNT(Ename) FROM EMP);
+PRINT 'W tabeli jest ' + CAST(@iloscOsob AS VARCHAR) + ' osób';
+
+--Everything written above GO doesn't exist
+GO
+
+--2
+DECLARE @var INT;
+SELECT @var = COUNT(1) FROM EMP;
+
+IF(@var < 16)
+	BEGIN
+		DECLARE @newId INT = (SELECT MAX(EMPNO) + 1 FROM EMP);
+		INSERT INTO EMP VALUES (ISNULL(@newId,1),'Kowalski','CLERK',NULL,GETDATE(),1300,NULL,10);
+		PRINT 'Wstawiono Kowalskiego';
+	END;
+ELSE
+	BEGIN
+		PRINT 'W tabeli już jest zbyt dużo rekordów: ' + CAST(@var AS VARCHAR);
+	END;
+
+GO
+
+--3
+
+DROP PROCEDURE IF EXISTS procedura;
+GO
+
+CREATE PROCEDURE procedura 
+	@minSal INT
+AS
+BEGIN
+--Nie zwraca ilosc zmienionych wierszy
+SET NOCOUNT ON
+SELECT ename,sal FROM EMP WHERE sal > @minSal;
+END
+GO
+
+EXECUTE procedura 1700;
+EXEC procedura @minsal = 3000;
+GO
+--4
+
+CREATE PROCEDURE wstawDzial
+@numerDzialu INT, @nazwaDzialu VARCHAR(50), @Lokalizacja VARCHAR(50)
+AS
+BEGIN
+	
+END;
+GO
